@@ -45,11 +45,19 @@ input[type="checkbox"] {
 }
 
 a {
-    color: var(--vscode-textLink-foreground);
+    color: var(--vscode-button-background);
     text-decoration: none;
 }
 
 a:hover {
-    color: var(--vscode-textLink-activeForeground);
+    color: var(--vscode-button-hoverBackground);
     text-decoration: underline;
+}
+
+a:active {
+    color: var(--vscode-button-secondaryBackground);
+}
+
+a:focus {
+    outline: none;
 }

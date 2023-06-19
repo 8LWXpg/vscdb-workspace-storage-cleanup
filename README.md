@@ -9,9 +9,3 @@ I used to open my Visual Studio Code workspaces with [PowerToys](https://github.
 ## Screenshots
 
 ![screenshot](./images/screenshot.png)
-
-## Release Notes
-
-### 1.0.0
-
-Initial release
