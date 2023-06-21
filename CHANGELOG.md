@@ -1,14 +1,14 @@
 # Change Log
 
-## v1.0.0
+## v1.0.2
 
-- Initial release
+- Change delete icon
+- Add test
 
 ## v1.0.1
 
 - Minor bug fix
 
-## v1.0.2
+## v1.0.0
 
-- Change delete icon
-- Add test
+- Initial release
