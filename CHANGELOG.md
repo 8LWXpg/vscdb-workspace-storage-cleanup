@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.0.3
+
+- Change display name
+
 ## v1.0.2
 
 - Change delete icon
