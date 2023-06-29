@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as sqlite3 from 'sqlite3';
+import * as sqlite3 from 'better-sqlite3';
 
 interface IWorkspaceInfo {
 	name: string;
@@ -132,91 +132,69 @@ async function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Ext
 }
 
 function getWorkspaceInfo(vscdb: string): Promise<IWorkspaceInfo[]> {
-	const db = new sqlite3.Database(vscdb);
+	const db: sqlite3.Database = new sqlite3(vscdb);
 
 	return new Promise<IWorkspaceInfo[]>((resolve, reject) => {
-		db.serialize(() => {
-			db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err, row: { value?: string }) => {
-				if (err) {
-					reject(err);
-				}
-				const value = row?.value ?? '';
-				const parsedValue = JSON.parse(value);
-				const folders = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty('folderUri'));
-				let workspaceInfo: IWorkspaceInfo[] = [];
-				for (const f of folders) {
-					let p, name, remote, pathExists, label;
-					p = f.folderUri;
-					name = path.basename(vscode.Uri.parse(f.folderUri).fsPath);
-					if (f.label) {
-						label = f.label;
-						remote = true;
-					} else {
-						label = vscode.Uri.parse(f.folderUri).fsPath;
-						remote = false;
-						pathExists = fs.existsSync(label);
-					}
-					workspaceInfo.push({
-						name: name,
-						path: p,
-						remote: remote,
-						label: label,
-						pathExists: pathExists,
-					});
-				}
-				workspaceInfo ? resolve(workspaceInfo) : reject('Could not find any workspace info');
+		const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
+		// @ts-ignore
+		const parsedValue = JSON.parse(row?.value);
+		const folders = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty('folderUri'));
+		let workspaceInfo: IWorkspaceInfo[] = [];
+		for (const f of folders) {
+			let p, name, remote, pathExists, label;
+			p = f.folderUri;
+			name = path.basename(vscode.Uri.parse(f.folderUri).fsPath);
+			if (f.label) {
+				label = f.label;
+				remote = true;
+			} else {
+				label = vscode.Uri.parse(f.folderUri).fsPath;
+				remote = false;
+				pathExists = fs.existsSync(label);
+			}
+			workspaceInfo.push({
+				name: name,
+				path: p,
+				remote: remote,
+				label: label,
+				pathExists: pathExists,
 			});
-		});
+		}
+		workspaceInfo ? resolve(workspaceInfo) : reject('Could not find any workspace info');
 		db.close();
 	});
 }
 
 function deleteWorkspace(vscdb: string, workspace: string[]): Promise<IWorkspaceInfo[]> {
-	const db = new sqlite3.Database(vscdb);
+	const db: sqlite3.Database = new sqlite3(vscdb);
 
 	return new Promise<IWorkspaceInfo[]>((resolve, reject) => {
-		db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err, row: { value: string }) => {
-			if (err) {
-				reject(err);
+		const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
+		// @ts-ignore
+		const parsedValue = JSON.parse(row?.value);
+		const folders = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty('folderUri'));
+		let workspaceInfo: IWorkspaceInfo[] = [];
+		for (const f of folders) {
+			let p, name, remote, pathExists, label;
+			p = f.folderUri;
+			name = path.basename(vscode.Uri.parse(f.folderUri).fsPath);
+			if (f.label) {
+				label = f.label;
+				remote = true;
+			} else {
+				label = vscode.Uri.parse(f.folderUri).fsPath;
+				remote = false;
+				pathExists = fs.existsSync(label);
 			}
-			const data = JSON.parse(row.value);
-
-			// Filter the entries array
-			data.entries = data.entries.filter((entry: { folderUri: string }) => !workspace.includes(entry.folderUri));
-
-			// Save the modified object back to the ItemTable
-			db.run("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'", JSON.stringify(data), err => {
-				if (err) {
-					reject(err);
-				}
-				vscode.window.showInformationMessage('Successfully deleted workspace.');
+			workspaceInfo.push({
+				name: name,
+				path: p,
+				remote: remote,
+				label: label,
+				pathExists: pathExists,
 			});
-
-			const folders = data.entries.filter((obj: object) => obj.hasOwnProperty('folderUri'));
-			let workspaceInfo: IWorkspaceInfo[] = [];
-			for (const f of folders) {
-				let p, name, remote, pathExists, label;
-				p = f.folderUri;
-				name = path.basename(vscode.Uri.parse(f.folderUri).fsPath);
-				if (f.label) {
-					label = f.label;
-					remote = true;
-				} else {
-					label = vscode.Uri.parse(f.folderUri).fsPath;
-					remote = false;
-					pathExists = fs.existsSync(label);
-				}
-				workspaceInfo.push({
-					name: name,
-					path: p,
-					remote: remote,
-					label: label,
-					pathExists: pathExists,
-				});
-			}
-			workspaceInfo ? resolve(workspaceInfo) : reject('Could not find any workspace info');
-		});
-		db.close();
+		}
+		workspaceInfo ? resolve(workspaceInfo) : reject('Could not find any workspace info');
 	});
 }
 
