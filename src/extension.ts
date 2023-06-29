@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as sqlite3 from 'sqlite3';
+import * as sqlite3 from '@vscode/sqlite3';
 
 interface IWorkspaceInfo {
 	name: string;
