@@ -57,8 +57,8 @@ jobs:
           npm_config_arch: ${{ matrix.npm_config_arch }}
       - shell: pwsh
         run: echo "target=${{ matrix.platform }}-${{ matrix.arch }}" >> $env:GITHUB_ENV
-      - run: npx vsce package --target ${{ env.target }}
-      - uses: actions/upload-artifact@v2
+      - run: vsce package --target ${{ env.target }}
+      - uses: actions/upload-artifact@v3
         with:
           name: ${{ env.target }}
           path: "*.vsix"
@@ -69,6 +69,6 @@ jobs:
     if: success() && startsWith( github.ref, 'refs/tags/')
     steps:
       - uses: actions/download-artifact@v2
-      - run: npx vsce publish --packagePath $(find . -iname *.vsix)
+      - run: vsce publish --packagePath $(find . -iname *.vsix)
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
