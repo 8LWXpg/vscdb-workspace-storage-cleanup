@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.0.4
+
+- Fix for different architecture
+
 ## v1.0.3
 
 - Change display name
