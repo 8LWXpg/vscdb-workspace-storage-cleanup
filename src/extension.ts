@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as sqlite3 from '@vscode/sqlite3';
+import * as sqlite3 from 'sqlite3';
 
 /**
  * describes the information related to a workspace or file.
@@ -256,7 +256,7 @@ function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri
 			data.entries = data.entries.filter((entry: { [key: string]: string }) => !target.includes(entry[type]));
 
 			// Save the modified object back to the ItemTable
-			db.run("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'", JSON.stringify(data), err => {
+			db.run("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'", JSON.stringify(data), (err: any) => {
 				if (err) {
 					reject(err);
 				}
