@@ -10,8 +10,8 @@ I used to open my Visual Studio Code workspaces with [PowerToys](https://github.
 
 This extension provides two commands:
 
-- `vscdb Cleanup: Workspace Storage`: Clean up the workspace storage.
-- `vscdb Cleanup: Recently Opened Files`: Clean up the file storage.
+- `vscdb Cleanup: Recently Opened Folders`
+- `vscdb Cleanup: Recently Opened Files`
 
 ## Screenshots
 

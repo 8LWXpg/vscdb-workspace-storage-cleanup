@@ -7,6 +7,7 @@
   "author": {
     "name": "8LWXpg"
   },
+  "license": "MIT",
   "icon": "images/icon.png",
   "bugs": {
     "url": "https://github.com/8LWXpg/vscdb-workspace-storage-cleanup/issues"
@@ -16,19 +17,31 @@
     "type": "git",
     "url": "https://github.com/8LWXpg/vscdb-workspace-storage-cleanup"
   },
-  "engines": {
-    "vscode": "^1.79.0"
-  },
   "categories": [
     "Other"
   ],
+  "keywords": [
+    "vscdb",
+    "recently opened",
+    "files",
+    "workspace",
+    "cleanup"
+  ],
+  "engines": {
+    "vscode": "^1.79.0"
+  },
   "activationEvents": [],
   "main": "./out/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": true
+    }
+  },
   "contributes": {
     "commands": [
       {
         "command": "vscdb-workspace-storage-cleanup.run",
-        "title": "vscdb Cleanup: Workspace Storage"
+        "title": "vscdb Cleanup: Recently Opened Folders"
       },
       {
         "command": "vscdb-workspace-storage-cleanup.file",
