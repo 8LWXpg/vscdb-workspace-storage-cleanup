@@ -1,5 +1,9 @@
 # Change Log
 
+## v1.1.0
+
+- Add support for files
+
 ## v1.0.4
 
 - Fix for different architecture

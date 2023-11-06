@@ -2,7 +2,7 @@
   "publisher": "8LWXpg",
   "name": "vscdb-workspace-storage-cleanup",
   "displayName": "Workspace Storage Cleanup (vscdb)",
-  "description": "Easy manage your workspace storage inside state.vscdb",
+  "description": "Easy manage your workspace and file storage inside state.vscdb",
   "version": "1.0.4",
   "author": {
     "name": "8LWXpg"
@@ -28,7 +28,11 @@
     "commands": [
       {
         "command": "vscdb-workspace-storage-cleanup.run",
-        "title": "Workspace Storage Cleanup (vscdb)"
+        "title": "vscdb Cleanup: Workspace Storage"
+      },
+      {
+        "command": "vscdb-workspace-storage-cleanup.file",
+        "title": "vscdb Cleanup: Recently Opened Files"
       }
     ]
   },

@@ -3,20 +3,20 @@ const vscode = acquireVsCodeApi();
 // Handle offset of sticky elements
 document.querySelectorAll('.sticky').forEach(e => e.style.top = `${e.offsetTop}px`);
 
-function onDelete(workspace) {
+function onDelete(selected) {
     vscode.postMessage({
         command: 'delete',
-        selectedWorkspaces: [workspace]
+        selected: [selected]
     });
 }
 
 function onDeleteSelected() {
     const selectedElements = document.querySelectorAll('tbody input[type="checkbox"]:checked');
-    const selectedWorkspaces = Array.from(selectedElements, element => element.getAttribute('path'));
+    const selected = Array.from(selectedElements, element => element.getAttribute('path'));
 
     vscode.postMessage({
         command: 'delete',
-        selectedWorkspaces: selectedWorkspaces
+        selected: selected
     });
 }
 
@@ -30,7 +30,7 @@ function onToggleAll() {
         .forEach(e => e.checked = !e.checked);
 }
 
-function onToggleFolderMissing() {
+function onToggleMissing() {
     document
         .querySelectorAll('tbody input[type="checkbox"][exist="false"]')
         .forEach(e => e.checked = !e.checked);

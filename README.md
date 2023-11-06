@@ -1,6 +1,6 @@
 # Workspace Storage Cleanup (vscdb)
 
-Easy manage your workspace storage inside `${globalStoragePath}/state.vscdb`
+Easy manage your workspace and file storage inside `${globalStoragePath}/state.vscdb`
 
 ## Why
 

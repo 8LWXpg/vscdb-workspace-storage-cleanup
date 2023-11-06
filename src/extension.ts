@@ -3,7 +3,17 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as sqlite3 from '@vscode/sqlite3';
 
-interface IWorkspaceInfo {
+/**
+ * describes the information related to a workspace or file.
+ *
+ * @interface
+ * @property {string} name - The name of the workspace or file.
+ * @property {string} path - The uri path of the workspace or file.
+ * @property {boolean} remote - Indicates whether the workspace or file is remote.
+ * @property {string} label - The label of the workspace or file, usually filesystem path or remote host.
+ * @property {boolean} [pathExists] - Indicates whether the workspace or file path exists. This property is optional.
+ */
+interface ITargetInfo {
 	name: string;
 	path: string;
 	remote: boolean;
@@ -13,7 +23,10 @@ interface IWorkspaceInfo {
 
 export function activate(context: vscode.ExtensionContext) {
 	(global as any).testExtensionContext = context;
-	let currentPanel: vscode.WebviewPanel | undefined = undefined;
+	let currentPanels = {
+		workspace: undefined as vscode.WebviewPanel | undefined,
+		file: undefined as vscode.WebviewPanel | undefined
+	};
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('vscdb-workspace-storage-cleanup.run', () => {
@@ -21,15 +34,15 @@ export function activate(context: vscode.ExtensionContext) {
 				? vscode.window.activeTextEditor.viewColumn
 				: undefined;
 
-			if (currentPanel) {
-				currentPanel.reveal(columnToShowIn);
+			if (currentPanels.workspace) {
+				currentPanels.workspace.reveal(columnToShowIn);
 				return;
 			}
 
 			const globalStoragePath = path.dirname(context.globalStorageUri.fsPath);
 			const vscdb = `${globalStoragePath}/state.vscdb`;
 
-			currentPanel = vscode.window.createWebviewPanel(
+			currentPanels.workspace = vscode.window.createWebviewPanel(
 				'table',
 				'Workspace Cleanup',
 				columnToShowIn || vscode.ViewColumn.One,
@@ -39,34 +52,92 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			);
 
-			const updateWebView = (workspaces: Promise<IWorkspaceInfo[]>) => {
-				if (!currentPanel) {
+			const updateWebView = (target: Promise<ITargetInfo[]>) => {
+				if (!currentPanels.workspace) {
 					return;
 				}
-				getWebView(currentPanel, context, workspaces).then((html) => {
-					if (!currentPanel) {
+				getWebView(currentPanels.workspace, context, target).then((html) => {
+					if (!currentPanels.workspace) {
 						return;
 					}
-					currentPanel.webview.html = html;
+					currentPanels.workspace.webview.html = html;
 				});
 			};
 
-			updateWebView(getWorkspaceInfo(vscdb));
+			updateWebView(getTargetInfo(vscdb));
 
 			// Reset when the current panel is closed
-			currentPanel.onDidDispose(
+			currentPanels.workspace.onDidDispose(
 				() => {
-					currentPanel = undefined;
+					currentPanels.workspace = undefined;
 				},
 				null,
 				context.subscriptions
 			);
 
-			currentPanel.webview.onDidReceiveMessage(
+			currentPanels.workspace.webview.onDidReceiveMessage(
 				message => {
 					switch (message.command) {
 						case 'delete':
-							updateWebView(deleteWorkspace(vscdb, message.selectedWorkspaces));
+							updateWebView(deleteTarget(vscdb, message.selectedWorkspaces));
+							break;
+						default:
+							break;
+					}
+				}
+			);
+		}),
+		vscode.commands.registerCommand('vscdb-workspace-storage-cleanup.file', () => {
+			const columnToShowIn = vscode.window.activeTextEditor
+				? vscode.window.activeTextEditor.viewColumn
+				: undefined;
+
+			if (currentPanels.file) {
+				currentPanels.file.reveal(columnToShowIn);
+				return;
+			}
+
+			const globalStoragePath = path.dirname(context.globalStorageUri.fsPath);
+			const vscdb = `${globalStoragePath}/state.vscdb`;
+
+			currentPanels.file = vscode.window.createWebviewPanel(
+				'table',
+				'Files Cleanup',
+				columnToShowIn || vscode.ViewColumn.One,
+				{
+					localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
+					enableScripts: true,
+				}
+			);
+
+			const updateWebView = (targets: Promise<ITargetInfo[]>) => {
+				if (!currentPanels.file) {
+					return;
+				}
+				getWebView(currentPanels.file, context, targets).then((html) => {
+					if (!currentPanels.file) {
+						return;
+					}
+					currentPanels.file.webview.html = html;
+				});
+			};
+
+			updateWebView(getTargetInfo(vscdb, 'fileUri'));
+
+			// Reset when the current panel is closed
+			currentPanels.file.onDidDispose(
+				() => {
+					currentPanels.file = undefined;
+				},
+				null,
+				context.subscriptions
+			);
+
+			currentPanels.file.webview.onDidReceiveMessage(
+				message => {
+					switch (message.command) {
+						case 'delete':
+							updateWebView(deleteTarget(vscdb, message.selected, 'fileUri'));
 							break;
 						default:
 							break;
@@ -79,11 +150,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() { }
 
-async function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.ExtensionContext, workspaceInfo: Promise<IWorkspaceInfo[]>): Promise<string> {
+async function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.ExtensionContext, info: Promise<ITargetInfo[]>): Promise<string> {
 	const scriptUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'webView.js'));
 	const styleUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'style.css'));
 
-	const tableRows = (await workspaceInfo).map((row) => {
+	const tableRows = (await info).map((row) => {
 		const icon = row.remote ? '🔗' : row.pathExists ? '✔️' : '❌';
 		return /* html */`<tr>
 	<td><input type="checkbox" remote="${row.remote}" exist="${row.remote || row.pathExists}" path="${row.path}"></td>
@@ -107,7 +178,7 @@ async function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Ext
 <body>
 	<div class=sticky>
 		<button onclick="onToggleAll()">Toggle all</button>
-		<button onclick="onToggleFolderMissing()">Toggle folder missing</button>
+		<button onclick="onToggleMissing()">Toggle missing</button>
 		<button onclick="onToggleRemote()">Toggle remote</button>
 		<button onclick="onDeleteSelected()">Delete</button>
 	</div>
@@ -131,32 +202,32 @@ async function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Ext
 </html>`;
 }
 
-function getWorkspaceInfo(vscdb: string): Promise<IWorkspaceInfo[]> {
+function getTargetInfo(vscdb: string, property: string = 'folderUri'): Promise<ITargetInfo[]> {
 	const db = new sqlite3.Database(vscdb);
 
-	return new Promise<IWorkspaceInfo[]>((resolve, reject) => {
+	return new Promise<ITargetInfo[]>((resolve, reject) => {
 		db.serialize(() => {
-			db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err, row: { value?: string }) => {
+			db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err: any, row: { value?: string }) => {
 				if (err) {
 					reject(err);
 				}
 				const value = row?.value ?? '';
 				const parsedValue = JSON.parse(value);
-				const folders = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty('folderUri'));
-				let workspaceInfo: IWorkspaceInfo[] = [];
-				for (const f of folders) {
+				const infos = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty(property));
+				let targetInfo: ITargetInfo[] = [];
+				for (const i of infos) {
 					let p, name, remote, pathExists, label;
-					p = f.folderUri;
-					name = path.basename(vscode.Uri.parse(f.folderUri).fsPath);
-					if (f.label) {
-						label = f.label;
+					p = i[property];
+					name = path.basename(vscode.Uri.parse(i[property]).fsPath);
+					if (i.label) {
+						label = i.label;
 						remote = true;
 					} else {
-						label = vscode.Uri.parse(f.folderUri).fsPath;
+						label = vscode.Uri.parse(i[property]).fsPath;
 						remote = false;
 						pathExists = fs.existsSync(label);
 					}
-					workspaceInfo.push({
+					targetInfo.push({
 						name: name,
 						path: p,
 						remote: remote,
@@ -164,25 +235,25 @@ function getWorkspaceInfo(vscdb: string): Promise<IWorkspaceInfo[]> {
 						pathExists: pathExists,
 					});
 				}
-				workspaceInfo ? resolve(workspaceInfo) : reject('Could not find any workspace info');
+				targetInfo ? resolve(targetInfo) : reject('Could not find any workspace info');
 			});
 		});
 		db.close();
 	});
 }
 
-function deleteWorkspace(vscdb: string, workspace: string[]): Promise<IWorkspaceInfo[]> {
+function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri'): Promise<ITargetInfo[]> {
 	const db = new sqlite3.Database(vscdb);
 
-	return new Promise<IWorkspaceInfo[]>((resolve, reject) => {
-		db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err, row: { value: string }) => {
+	return new Promise<ITargetInfo[]>((resolve, reject) => {
+		db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err: any, row: { value: string }) => {
 			if (err) {
 				reject(err);
 			}
 			const data = JSON.parse(row.value);
 
 			// Filter the entries array
-			data.entries = data.entries.filter((entry: { folderUri: string }) => !workspace.includes(entry.folderUri));
+			data.entries = data.entries.filter((entry: { [key: string]: string }) => !target.includes(entry[type]));
 
 			// Save the modified object back to the ItemTable
 			db.run("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'", JSON.stringify(data), err => {
@@ -192,21 +263,21 @@ function deleteWorkspace(vscdb: string, workspace: string[]): Promise<IWorkspace
 				vscode.window.showInformationMessage('Successfully deleted workspace.');
 			});
 
-			const folders = data.entries.filter((obj: object) => obj.hasOwnProperty('folderUri'));
-			let workspaceInfo: IWorkspaceInfo[] = [];
-			for (const f of folders) {
+			const infos = data.entries.filter((obj: object) => obj.hasOwnProperty(type));
+			let targetInfo: ITargetInfo[] = [];
+			for (const i of infos) {
 				let p, name, remote, pathExists, label;
-				p = f.folderUri;
-				name = path.basename(vscode.Uri.parse(f.folderUri).fsPath);
-				if (f.label) {
-					label = f.label;
+				p = i[type];
+				name = path.basename(vscode.Uri.parse(i[type]).fsPath);
+				if (i.label) {
+					label = i.label;
 					remote = true;
 				} else {
-					label = vscode.Uri.parse(f.folderUri).fsPath;
+					label = vscode.Uri.parse(i[type]).fsPath;
 					remote = false;
 					pathExists = fs.existsSync(label);
 				}
-				workspaceInfo.push({
+				targetInfo.push({
 					name: name,
 					path: p,
 					remote: remote,
@@ -214,7 +285,7 @@ function deleteWorkspace(vscdb: string, workspace: string[]): Promise<IWorkspace
 					pathExists: pathExists,
 				});
 			}
-			workspaceInfo ? resolve(workspaceInfo) : reject('Could not find any workspace info');
+			targetInfo ? resolve(targetInfo) : reject('Could not find any workspace/file info');
 		});
 		db.close();
 	});
@@ -222,7 +293,7 @@ function deleteWorkspace(vscdb: string, workspace: string[]): Promise<IWorkspace
 
 // for making screenshots
 export async function uiTest(context: vscode.ExtensionContext) {
-	const testWorkspace: IWorkspaceInfo[] = [
+	const testWorkspace: ITargetInfo[] = [
 		{ name: 'temp1', label: 'd:\\temp\\temp1', path: 'file:///d%3A/temp/temp1', remote: false, pathExists: true },
 		{ name: 'temp2', label: 'd:\\temp\\temp2', path: 'file:///d%3A/temp/temp2', remote: false, pathExists: true },
 		{ name: 'temp3', label: 'd:\\temp\\temp3', path: 'file:///d%3A/temp/temp3', remote: false, pathExists: false },
