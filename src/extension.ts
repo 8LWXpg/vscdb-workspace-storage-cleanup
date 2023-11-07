@@ -28,6 +28,9 @@ export function activate(context: vscode.ExtensionContext) {
 		file: undefined as vscode.WebviewPanel | undefined
 	};
 
+	const globalStoragePath = path.dirname(context.globalStorageUri.fsPath);
+	const vscdb = `${globalStoragePath}/state.vscdb`;
+
 	context.subscriptions.push(
 		vscode.commands.registerCommand('vscdb-workspace-storage-cleanup.run', () => {
 			const columnToShowIn = vscode.window.activeTextEditor
@@ -39,9 +42,6 @@ export function activate(context: vscode.ExtensionContext) {
 				return;
 			}
 
-			const globalStoragePath = path.dirname(context.globalStorageUri.fsPath);
-			const vscdb = `${globalStoragePath}/state.vscdb`;
-
 			currentPanels.workspace = vscode.window.createWebviewPanel(
 				'table',
 				'Workspace Cleanup',
@@ -52,15 +52,18 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			);
 
-			const updateWebView = (target: Promise<ITargetInfo[]>) => {
+
+			const updateWebView = (targets: Promise<ITargetInfo[]>) => {
 				if (!currentPanels.workspace) {
 					return;
 				}
-				getWebView(currentPanels.workspace, context, target).then((html) => {
+				getWebView(currentPanels.workspace, context, targets).then((html) => {
 					if (!currentPanels.workspace) {
 						return;
 					}
 					currentPanels.workspace.webview.html = html;
+				}).catch((err) => {
+					vscode.window.showErrorMessage(err);
 				});
 			};
 
@@ -79,7 +82,7 @@ export function activate(context: vscode.ExtensionContext) {
 				message => {
 					switch (message.command) {
 						case 'delete':
-							updateWebView(deleteTarget(vscdb, message.selectedWorkspaces));
+							updateWebView(deleteTarget(vscdb, message.selected));
 							break;
 						default:
 							break;
@@ -96,9 +99,6 @@ export function activate(context: vscode.ExtensionContext) {
 				currentPanels.file.reveal(columnToShowIn);
 				return;
 			}
-
-			const globalStoragePath = path.dirname(context.globalStorageUri.fsPath);
-			const vscdb = `${globalStoragePath}/state.vscdb`;
 
 			currentPanels.file = vscode.window.createWebviewPanel(
 				'table',
@@ -119,6 +119,8 @@ export function activate(context: vscode.ExtensionContext) {
 						return;
 					}
 					currentPanels.file.webview.html = html;
+				}).catch((err) => {
+					vscode.window.showErrorMessage(err);
 				});
 			};
 
@@ -260,7 +262,7 @@ function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri
 				if (err) {
 					reject(err);
 				}
-				vscode.window.showInformationMessage('Successfully deleted workspace.');
+				// vscode.window.showInformationMessage('Successfully deleted workspace.');
 			});
 
 			const infos = data.entries.filter((obj: object) => obj.hasOwnProperty(type));
