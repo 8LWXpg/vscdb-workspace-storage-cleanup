@@ -207,7 +207,7 @@ function getTargetInfo(vscdb: string, property: string = 'folderUri'): Promise<I
 
 	return new Promise<ITargetInfo[]>((resolve, reject) => {
 		db.serialize(() => {
-			db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err: any, row: { value?: string }) => {
+			db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err, row: { value?: string }) => {
 				if (err) {
 					reject(err);
 				}
@@ -246,7 +246,7 @@ function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri
 	const db = new sqlite3.Database(vscdb);
 
 	return new Promise<ITargetInfo[]>((resolve, reject) => {
-		db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err: any, row: { value: string }) => {
+		db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err, row: { value: string }) => {
 			if (err) {
 				reject(err);
 			}
@@ -256,7 +256,7 @@ function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri
 			data.entries = data.entries.filter((entry: { [key: string]: string }) => !target.includes(entry[type]));
 
 			// Save the modified object back to the ItemTable
-			db.run("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'", JSON.stringify(data), (err: any) => {
+			db.run("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'", JSON.stringify(data), (err) => {
 				if (err) {
 					reject(err);
 				}
@@ -289,34 +289,4 @@ function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri
 		});
 		db.close();
 	});
-}
-
-// for making screenshots
-export async function uiTest(context: vscode.ExtensionContext) {
-	const testWorkspace: ITargetInfo[] = [
-		{ name: 'temp1', label: 'd:\\temp\\temp1', path: 'file:///d%3A/temp/temp1', remote: false, pathExists: true },
-		{ name: 'temp2', label: 'd:\\temp\\temp2', path: 'file:///d%3A/temp/temp2', remote: false, pathExists: true },
-		{ name: 'temp3', label: 'd:\\temp\\temp3', path: 'file:///d%3A/temp/temp3', remote: false, pathExists: false },
-		{ name: 'temp4', label: 'd:\\temp\\temp4', path: 'file:///d%3A/temp/temp4', remote: false, pathExists: true },
-		{ name: 'temp5', label: 'd:\\temp\\temp5', path: 'file:///d%3A/temp/temp5', remote: false, pathExists: true },
-		{ name: 'temp6', label: 'd:\\temp\\temp6', path: 'file:///d%3A/temp/temp6', remote: false, pathExists: true },
-		{ name: 'temp7', label: 'd:\\temp\\temp7', path: 'file:///d%3A/temp/temp7', remote: false, pathExists: true },
-		{ name: 'temp8', label: 'd:\\temp\\temp8', path: 'file:///d%3A/temp/temp8', remote: false, pathExists: false },
-		{ name: 'temp9', label: 'd:\\temp\\temp9', path: 'file:///d%3A/temp/temp9', remote: false, pathExists: true },
-		{ name: 'temp10', label: 'd:\\temp\\temp10', path: 'file:///d%3A/temp/temp10', remote: false, pathExists: true },
-		{ name: 'temp4', label: 'D:\\temp\\temp4 [SSH: 192.168.0.16]', path: 'ssh-remote://', remote: true },
-	];
-
-	const panel = vscode.window.createWebviewPanel(
-		'table',
-		'Workspace Cleanup',
-		vscode.ViewColumn.One,
-		{
-			localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
-			enableScripts: true,
-		}
-	);
-
-	panel.webview.html = await getWebView(panel, context, Promise.resolve(testWorkspace));
-	vscode.window.showInformationMessage('screenshot');
 }

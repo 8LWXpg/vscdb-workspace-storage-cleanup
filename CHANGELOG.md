@@ -1,8 +1,9 @@
 # Change Log
 
-## v1.1.0
+## v2.0.0
 
-- Add support for files
+- Add support for files - `vscdb Cleanup: Recently Opened Files`
+- Change original command name to `vscdb Cleanup: Recently Opened Folders`
 
 ## v1.0.4
 
