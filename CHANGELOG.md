@@ -1,5 +1,9 @@
 # Change Log
 
+## v2.0.1
+
+- Fix for folders
+
 ## v2.0.0
 
 - Add support for files - `vscdb Cleanup: Recently Opened Files`
