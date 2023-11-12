@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as sqlite3 from 'sqlite3';
+import * as Database from 'better-sqlite3';
 
 /**
  * describes the information related to a workspace or file.
@@ -53,18 +53,11 @@ export function activate(context: vscode.ExtensionContext) {
 			);
 
 
-			const updateWebView = (targets: Promise<ITargetInfo[]>) => {
+			const updateWebView = (targets: ITargetInfo[]) => {
 				if (!currentPanels.workspace) {
 					return;
 				}
-				getWebView(currentPanels.workspace, context, targets).then((html) => {
-					if (!currentPanels.workspace) {
-						return;
-					}
-					currentPanels.workspace.webview.html = html;
-				}).catch((err) => {
-					vscode.window.showErrorMessage(err);
-				});
+				currentPanels.workspace.webview.html = getWebView(currentPanels.workspace, context, targets);
 			};
 
 			updateWebView(getTargetInfo(vscdb));
@@ -110,18 +103,11 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			);
 
-			const updateWebView = (targets: Promise<ITargetInfo[]>) => {
+			const updateWebView = (targets: ITargetInfo[]) => {
 				if (!currentPanels.file) {
 					return;
 				}
-				getWebView(currentPanels.file, context, targets).then((html) => {
-					if (!currentPanels.file) {
-						return;
-					}
-					currentPanels.file.webview.html = html;
-				}).catch((err) => {
-					vscode.window.showErrorMessage(err);
-				});
+				currentPanels.file.webview.html = getWebView(currentPanels.file, context, targets);
 			};
 
 			updateWebView(getTargetInfo(vscdb, 'fileUri'));
@@ -152,11 +138,11 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() { }
 
-async function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.ExtensionContext, info: Promise<ITargetInfo[]>): Promise<string> {
+function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.ExtensionContext, info: ITargetInfo[]): string {
 	const scriptUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'webView.js'));
 	const styleUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'style.css'));
 
-	const tableRows = (await info).map((row) => {
+	const tableRows = info.map((row) => {
 		const icon = row.remote ? '🔗' : row.pathExists ? '✔️' : '❌';
 		return /* html */`<tr>
 	<td><input type="checkbox" remote="${row.remote}" exist="${row.remote || row.pathExists}" path="${row.path}"></td>
@@ -204,91 +190,70 @@ async function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Ext
 </html>`;
 }
 
-function getTargetInfo(vscdb: string, property: string = 'folderUri'): Promise<ITargetInfo[]> {
-	const db = new sqlite3.Database(vscdb);
-
-	return new Promise<ITargetInfo[]>((resolve, reject) => {
-		db.serialize(() => {
-			db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err, row: { value?: string }) => {
-				if (err) {
-					reject(err);
-				}
-				const value = row?.value ?? '';
-				const parsedValue = JSON.parse(value);
-				const infos = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty(property));
-				let targetInfo: ITargetInfo[] = [];
-				for (const i of infos) {
-					let p, name, remote, pathExists, label;
-					p = i[property];
-					name = path.basename(vscode.Uri.parse(i[property]).fsPath);
-					if (i.label) {
-						label = i.label;
-						remote = true;
-					} else {
-						label = vscode.Uri.parse(i[property]).fsPath;
-						remote = false;
-						pathExists = fs.existsSync(label);
-					}
-					targetInfo.push({
-						name: name,
-						path: p,
-						remote: remote,
-						label: label,
-						pathExists: pathExists,
-					});
-				}
-				targetInfo ? resolve(targetInfo) : reject('Could not find any workspace info');
-			});
+function getTargetInfo(vscdb: string, property: string = 'folderUri'): ITargetInfo[] {
+	const db = new Database(vscdb);
+	const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
+	// @ts-ignore
+	const value = row?.value ?? '';
+	const parsedValue = JSON.parse(value);
+	const infos = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty(property));
+	let targetInfo: ITargetInfo[] = [];
+	for (const i of infos) {
+		let p, name, remote, pathExists, label;
+		p = i[property];
+		name = path.basename(vscode.Uri.parse(i[property]).fsPath);
+		if (i.label) {
+			label = i.label;
+			remote = true;
+		} else {
+			label = vscode.Uri.parse(i[property]).fsPath;
+			remote = false;
+			pathExists = fs.existsSync(label);
+		}
+		targetInfo.push({
+			name: name,
+			path: p,
+			remote: remote,
+			label: label,
+			pathExists: pathExists,
 		});
-		db.close();
-	});
+	}
+	return targetInfo;
 }
 
-function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri'): Promise<ITargetInfo[]> {
-	const db = new sqlite3.Database(vscdb);
+function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri'): ITargetInfo[] {
+	const db = new Database(vscdb);
+	const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
+	// @ts-ignore
+	const data = JSON.parse(row.value);
 
-	return new Promise<ITargetInfo[]>((resolve, reject) => {
-		db.get("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'", (err, row: { value: string }) => {
-			if (err) {
-				reject(err);
-			}
-			const data = JSON.parse(row.value);
+	// Filter the entries array
+	data.entries = data.entries.filter((entry: { [key: string]: string }) => !target.includes(entry[type]));
 
-			// Filter the entries array
-			data.entries = data.entries.filter((entry: { [key: string]: string }) => !target.includes(entry[type]));
+	// Save the modified object back to the ItemTable
+	db.prepare("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'").run(JSON.stringify(data));
 
-			// Save the modified object back to the ItemTable
-			db.run("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'", JSON.stringify(data), (err) => {
-				if (err) {
-					reject(err);
-				}
-				// vscode.window.showInformationMessage('Successfully deleted workspace.');
-			});
-
-			const infos = data.entries.filter((obj: object) => obj.hasOwnProperty(type));
-			let targetInfo: ITargetInfo[] = [];
-			for (const i of infos) {
-				let p, name, remote, pathExists, label;
-				p = i[type];
-				name = path.basename(vscode.Uri.parse(i[type]).fsPath);
-				if (i.label) {
-					label = i.label;
-					remote = true;
-				} else {
-					label = vscode.Uri.parse(i[type]).fsPath;
-					remote = false;
-					pathExists = fs.existsSync(label);
-				}
-				targetInfo.push({
-					name: name,
-					path: p,
-					remote: remote,
-					label: label,
-					pathExists: pathExists,
-				});
-			}
-			targetInfo ? resolve(targetInfo) : reject('Could not find any workspace/file info');
+	const infos = data.entries.filter((obj: object) => obj.hasOwnProperty(type));
+	let targetInfo: ITargetInfo[] = [];
+	for (const i of infos) {
+		let p, name, remote, pathExists, label;
+		p = i[type];
+		name = path.basename(vscode.Uri.parse(i[type]).fsPath);
+		if (i.label) {
+			label = i.label;
+			remote = true;
+		} else {
+			label = vscode.Uri.parse(i[type]).fsPath;
+			remote = false;
+			pathExists = fs.existsSync(label);
+		}
+		targetInfo.push({
+			name: name,
+			path: p,
+			remote: remote,
+			label: label,
+			pathExists: pathExists,
 		});
-		db.close();
-	});
+	}
+	return targetInfo;
 }
