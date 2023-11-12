@@ -1,5 +1,9 @@
 # Change Log
 
+## v2.1.0
+
+- Change to `better-sqlite3` for handling database
+
 ## v2.0.1
 
 - Fix for folders
