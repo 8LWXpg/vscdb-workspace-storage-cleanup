@@ -1,0 +1,31 @@
+name: Bug report
+description: Report a bug in the extension
+
+labels:
+  - bug
+
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Description
+      description: Please provide a clear and concise description of the bug you are experiencing.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: arch
+    attributes:
+      label: Architecture
+      description: Which architecture are you using?
+      options:
+        - Windows x64
+        - Windows ia32
+        - macOS Intel
+        - macOS Apple Silicon
+        - Linux x64
+        - Linux ARM32
+        - Linux ARM64
+        - Alpine Linux 64 bit
+    validations:
+      required: true
