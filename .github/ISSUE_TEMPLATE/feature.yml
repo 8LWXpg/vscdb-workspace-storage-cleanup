@@ -2,7 +2,7 @@ name: Feature request
 description: Suggest a new feature or enhancement for the extension
 
 labels:
-  - feature request
+  - enhancement
 
 body:
   - type: textarea
