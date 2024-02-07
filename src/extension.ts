@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as Database from 'better-sqlite3';
+import DatabaseConstructor, { Database } from 'better-sqlite3';
 
 /**
  * describes the information related to a workspace or file.
@@ -191,7 +191,7 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 }
 
 function getTargetInfo(vscdb: string, property: string = 'folderUri'): ITargetInfo[] {
-	const db = new Database(vscdb);
+	const db = new DatabaseConstructor(vscdb);
 	const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
 	// @ts-ignore
 	const value = row?.value ?? '';
@@ -222,7 +222,7 @@ function getTargetInfo(vscdb: string, property: string = 'folderUri'): ITargetIn
 }
 
 function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri'): ITargetInfo[] {
-	const db = new Database(vscdb);
+	const db = new DatabaseConstructor(vscdb);
 	const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
 	// @ts-ignore
 	const data = JSON.parse(row.value);
