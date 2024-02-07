@@ -1,5 +1,11 @@
 # Change Log
 
+## v2.2.0
+
+- Change to `esbuild` for building
+- Bump `electron-rebuild` electron version to `27.2.3`
+- Bump dependencies
+
 ## v2.1.0
 
 - Change to `better-sqlite3` for handling database
