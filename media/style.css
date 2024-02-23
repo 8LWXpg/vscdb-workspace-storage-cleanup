@@ -3,7 +3,6 @@
     --input-padding-vertical: 6px;
     --input-padding-horizontal: 4px;
     --input-margin-vertical: 4px;
-    --input-margin-horizontal: 0;
 }
 
 body {
@@ -13,17 +12,6 @@ body {
     font-weight: var(--vscode-font-weight);
     font-family: var(--vscode-font-family);
     background-color: var(--vscode-editor-background);
-}
-
-ol,
-ul {
-    padding-left: var(--container-paddding);
-}
-
-body>*,
-form>* {
-    margin-block-start: var(--input-margin-vertical);
-    margin-block-end: var(--input-margin-vertical);
 }
 
 *:focus {
@@ -93,25 +81,28 @@ textarea::placeholder {
 }
 
 table {
-    border-collapse: collapse;
+    border-collapse: separate;
+    border-spacing: 0;
     width: 100%;
-    margin: 0;
 }
 
-th,
-td {
+table thead th {
     text-align: left;
-    padding: 8px;
-    border-bottom: 1px solid;
+    padding: 6px;
 }
 
-table thead tr th {
+table thead tr:last-child th {
     border-bottom: 2px solid;
+}
+
+table tbody td {
+    text-align: left;
+    padding: 6px;
+    border-bottom: 1px solid;
 }
 
 .sticky {
     position: sticky;
     background-color: var(--vscode-input-background);
-    margin: 0;
     padding: 5pt 5pt 0;
 }

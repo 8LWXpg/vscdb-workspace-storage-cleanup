@@ -3,9 +3,6 @@ const vscode = acquireVsCodeApi();
 window.onload = function () {
     // Handle offset of sticky elements
     document.querySelectorAll('.sticky').forEach(e => e.style.top = `${e.offsetTop}px`);
-
-    // handle width of div with buttons incase the table is wider than the screen
-    document.querySelector('.sticky').style.width = document.querySelector('table').offsetWidth + 'px';
 };
 
 function onDelete(selected) {

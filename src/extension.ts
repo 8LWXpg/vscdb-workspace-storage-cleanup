@@ -164,15 +164,17 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 </head>
 
 <body>
-	<div class=sticky>
-		<button onclick="onToggleAll()">Toggle all</button>
-		<button onclick="onToggleMissing()">Toggle missing</button>
-		<button onclick="onToggleRemote()">Toggle remote</button>
-		<button onclick="onDeleteSelected()">Delete</button>
-	</div>
 	<table>
-		<thead>
-			<tr class=sticky>
+		<thead class=sticky>
+			<tr>
+				<th colspan=5>
+					<button onclick="onToggleAll()">Toggle all</button>
+					<button onclick="onToggleMissing()">Toggle missing</button>
+					<button onclick="onToggleRemote()">Toggle remote</button>
+					<button onclick="onDeleteSelected()">Delete</button>
+				</th>
+			</tr>
+			<tr>
 				<th><input type="checkbox" id="select-all" onchange="onSelectAllChange(this)"></th>
 				<th>Name</th>
 				<th>Path / URL</th>
