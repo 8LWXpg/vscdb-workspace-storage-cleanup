@@ -54,7 +54,7 @@
     "rebuild": "electron-rebuild -v 27.2.3",
     "compile": "npm run rebuild && node esbuild.js",
     "package": "npm run rebuild && node ./esbuild.js",
-    "watch": "node ./esbuild.js --watch",
+    "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "node ./out/test/runTest.js",

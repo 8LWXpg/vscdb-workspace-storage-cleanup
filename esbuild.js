@@ -16,9 +16,25 @@ const extensionConfig = {
 	external: ["vscode", "better-sqlite3"],
 };
 
+const webviewConfig = {
+	...baseConfig,
+	target: "esnext",
+	format: "esm",
+	entryPoints: ["./src/media/webView.js"],
+	outfile: "./media/webView.js",
+};
+
+const cssConfig = {
+	...baseConfig,
+	entryPoints: ["./src/media/style.css"],
+	outfile: "./media/style.css",
+};
+
 (async () => {
 	try {
 		await build(extensionConfig);
+		await build(webviewConfig);
+		await build(cssConfig);
 		console.log("build complete");
 	} catch (err) {
 		process.stderr.write(err.stderr);
