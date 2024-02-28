@@ -2,8 +2,8 @@ const { build } = require("esbuild");
 
 const baseConfig = {
 	bundle: true,
-	minify: process.env.NODE_ENV !== "test",
-	sourcemap: process.env.NODE_ENV === "test",
+	minify: true,
+	sourcemap: false,
 };
 
 const extensionConfig = {
