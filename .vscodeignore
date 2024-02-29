@@ -9,3 +9,4 @@ out/test/**
 .github/**
 *.vsix
 esbuild.js
+images\screenshot.png
