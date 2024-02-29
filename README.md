@@ -15,4 +15,4 @@ This extension provides two commands:
 
 ## Screenshots
 
-![screenshot](./images/screenshot.png)
+![screenshot](https://github.com/8LWXpg/vscdb-workspace-storage-cleanup/blob/main/images/screenshot.png)
