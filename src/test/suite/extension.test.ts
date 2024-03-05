@@ -44,15 +44,10 @@ async function uiTest(context: vscode.ExtensionContext) {
 		{ name: 'temp4', label: 'D:\\temp\\temp4 [SSH: 192.168.0.16]', path: 'ssh-remote://', remote: true },
 	];
 
-	const panel = vscode.window.createWebviewPanel(
-		'table',
-		'Workspace Cleanup',
-		vscode.ViewColumn.One,
-		{
-			localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
-			enableScripts: true,
-		}
-	);
+	const panel = vscode.window.createWebviewPanel('table', 'Workspace Cleanup', vscode.ViewColumn.One, {
+		localResourceRoots: [vscode.Uri.file(path.join(context.extensionPath, 'media'))],
+		enableScripts: true,
+	});
 
 	// @ts-ignore
 	panel.webview.html = await extension.getWebView(panel, context, Promise.resolve(testWorkspace));

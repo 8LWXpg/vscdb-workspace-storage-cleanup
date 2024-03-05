@@ -25,7 +25,7 @@ export function activate(context: vscode.ExtensionContext) {
 	(global as any).testExtensionContext = context;
 	let currentPanels = {
 		workspace: undefined as vscode.WebviewPanel | undefined,
-		file: undefined as vscode.WebviewPanel | undefined
+		file: undefined as vscode.WebviewPanel | undefined,
 	};
 
 	const globalStoragePath = path.dirname(context.globalStorageUri.fsPath);
@@ -33,9 +33,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(
 		vscode.commands.registerCommand('vscdb-workspace-storage-cleanup.run', () => {
-			const columnToShowIn = vscode.window.activeTextEditor
-				? vscode.window.activeTextEditor.viewColumn
-				: undefined;
+			const columnToShowIn = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
 			if (currentPanels.workspace) {
 				currentPanels.workspace.reveal(columnToShowIn);
@@ -51,7 +49,6 @@ export function activate(context: vscode.ExtensionContext) {
 					enableScripts: true,
 				}
 			);
-
 
 			const updateWebView = (targets: ITargetInfo[]) => {
 				if (!currentPanels.workspace) {
@@ -71,22 +68,18 @@ export function activate(context: vscode.ExtensionContext) {
 				context.subscriptions
 			);
 
-			currentPanels.workspace.webview.onDidReceiveMessage(
-				message => {
-					switch (message.command) {
-						case 'delete':
-							updateWebView(deleteTarget(vscdb, message.selected));
-							break;
-						default:
-							break;
-					}
+			currentPanels.workspace.webview.onDidReceiveMessage((message) => {
+				switch (message.command) {
+					case 'delete':
+						updateWebView(deleteTarget(vscdb, message.selected));
+						break;
+					default:
+						break;
 				}
-			);
+			});
 		}),
 		vscode.commands.registerCommand('vscdb-workspace-storage-cleanup.file', () => {
-			const columnToShowIn = vscode.window.activeTextEditor
-				? vscode.window.activeTextEditor.viewColumn
-				: undefined;
+			const columnToShowIn = vscode.window.activeTextEditor ? vscode.window.activeTextEditor.viewColumn : undefined;
 
 			if (currentPanels.file) {
 				currentPanels.file.reveal(columnToShowIn);
@@ -121,30 +114,29 @@ export function activate(context: vscode.ExtensionContext) {
 				context.subscriptions
 			);
 
-			currentPanels.file.webview.onDidReceiveMessage(
-				message => {
-					switch (message.command) {
-						case 'delete':
-							updateWebView(deleteTarget(vscdb, message.selected, 'fileUri'));
-							break;
-						default:
-							break;
-					}
+			currentPanels.file.webview.onDidReceiveMessage((message) => {
+				switch (message.command) {
+					case 'delete':
+						updateWebView(deleteTarget(vscdb, message.selected, 'fileUri'));
+						break;
+					default:
+						break;
 				}
-			);
+			});
 		})
 	);
 }
 
-export function deactivate() { }
+export function deactivate() {}
 
 function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.ExtensionContext, info: ITargetInfo[]): string {
 	const scriptUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'webView.js'));
 	const styleUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'style.css'));
 
-	const tableRows = info.map((row) => {
-		const icon = row.remote ? '🔗' : row.pathExists ? '✔️' : '❌';
-		return /* html */`<tr>
+	const tableRows = info
+		.map((row) => {
+			const icon = row.remote ? '🔗' : row.pathExists ? '✔️' : '❌';
+			return /* html */ `<tr>
 	<td><input type="checkbox" remote="${row.remote}" exist="${row.remote || row.pathExists}" path="${row.path}"></td>
 	<td>${row.name}</td>
 	<td>${row.label}</td>
@@ -153,9 +145,10 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 		<a href="Delete" onclick="onDelete('${row.path}')"><i class="fa fa-trash-alt"></i></a>
 	</td>
 </tr>`;
-	}).join('');
+		})
+		.join('');
 
-	return /* html */`<!DOCTYPE html>
+	return /* html */ `<!DOCTYPE html>
 <html lang="en">
 
 <head>
