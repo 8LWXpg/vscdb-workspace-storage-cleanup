@@ -1,5 +1,10 @@
 # Change Log
 
+## v2.3.0
+
+- Slightly changed the Webview UI
+- Bump `electron-rebuild` electron version to `28.2.8`
+
 ## v2.2.0
 
 - Change to `esbuild` for building
