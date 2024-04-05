@@ -20,7 +20,6 @@ body:
       description: Which architecture are you using?
       options:
         - Windows x64
-        - Windows ia32
         - macOS Intel
         - macOS Apple Silicon
         - Linux x64
