@@ -1,5 +1,9 @@
 # Change Log
 
+## 2.4.0
+
+- Bump `electron-rebuild` electron version to `29.4.0`
+
 ## v2.3.0
 
 - Slightly changed the Webview UI
