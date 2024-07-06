@@ -2,24 +2,26 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import DatabaseConstructor from 'better-sqlite3';
+import { get } from 'http';
 
 /**
  * describes the information related to a workspace or file.
  *
- * @interface
  * @property {string} name - The name of the workspace or file.
  * @property {string} path - The uri path of the workspace or file.
  * @property {boolean} remote - Indicates whether the workspace or file is remote.
  * @property {string} label - The label of the workspace or file, usually filesystem path or remote host.
  * @property {boolean} [pathExists] - Indicates whether the workspace or file path exists. This property is optional.
  */
-interface ITargetInfo {
+type TargetInfo = {
 	name: string;
 	path: string;
 	remote: boolean;
 	label: string;
 	pathExists?: boolean;
-}
+};
+
+type QueryType = 'folderUri' | 'fileUri';
 
 export function activate(context: vscode.ExtensionContext) {
 	(global as any).testExtensionContext = context;
@@ -50,14 +52,17 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			);
 
-			const updateWebView = (targets: ITargetInfo[]) => {
+			const updateWebView = (targets: TargetInfo[]) => {
 				if (!currentPanels.workspace) {
 					return;
 				}
-				currentPanels.workspace.webview.html = getWebView(currentPanels.workspace, context, targets);
+				currentPanels.workspace.webview.postMessage({
+					command: 'update',
+					html: getTableRows(targets),
+				});
 			};
 
-			updateWebView(getTargetInfo(vscdb));
+			currentPanels.workspace.webview.html = getWebView(currentPanels.workspace, context, getTargetInfo(vscdb));
 
 			// Reset when the current panel is closed
 			currentPanels.workspace.onDidDispose(
@@ -96,14 +101,17 @@ export function activate(context: vscode.ExtensionContext) {
 				}
 			);
 
-			const updateWebView = (targets: ITargetInfo[]) => {
+			const updateWebView = (targets: TargetInfo[]) => {
 				if (!currentPanels.file) {
 					return;
 				}
-				currentPanels.file.webview.html = getWebView(currentPanels.file, context, targets);
+				currentPanels.file.webview.postMessage({
+					command: 'update',
+					html: getTableRows(targets),
+				});
 			};
 
-			updateWebView(getTargetInfo(vscdb, 'fileUri'));
+			currentPanels.file.webview.html = getWebView(currentPanels.file, context, getTargetInfo(vscdb, 'fileUri'));
 
 			// Reset when the current panel is closed
 			currentPanels.file.onDidDispose(
@@ -129,15 +137,12 @@ export function activate(context: vscode.ExtensionContext) {
 
 export function deactivate() {}
 
-function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.ExtensionContext, info: ITargetInfo[]): string {
-	const scriptUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'webView.js'));
-	const styleUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'style.css'));
-
-	const tableRows = info
+function getTableRows(info: TargetInfo[]): string {
+	return info
 		.map((row) => {
 			const icon = row.remote ? '🔗' : row.pathExists ? '✔️' : '❌';
 			return /* html */ `<tr>
-	<td><input type="checkbox" remote="${row.remote}" exist="${row.remote || row.pathExists}" path="${row.path}"></td>
+	<td><vscode-checkbox remote="${row.remote}" exist="${row.remote || row.pathExists}" path="${row.path}"></td>
 	<td>${row.name}</td>
 	<td>${row.label}</td>
 	<td>${icon}</td>
@@ -147,6 +152,15 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 </tr>`;
 		})
 		.join('');
+}
+
+function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.ExtensionContext, info: TargetInfo[]): string {
+	const scriptUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'webView.js'));
+	const styleUri = currentPanel.webview.asWebviewUri(vscode.Uri.joinPath(context.extensionUri, 'media', 'style.css'));
+	const componentUri = currentPanel.webview.asWebviewUri(
+		vscode.Uri.joinPath(context.extensionUri, 'media', 'component.js')
+	);
+	const tableRows = getTableRows(info);
 
 	return /* html */ `<!DOCTYPE html>
 <html lang="en">
@@ -154,6 +168,8 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 <head>
 	<link rel="stylesheet" href="${styleUri}">
 	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
+	<script src="${scriptUri}"></script>
+	<script type="module" src="${componentUri}"></script>
 </head>
 
 <body>
@@ -161,14 +177,14 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 		<thead class=sticky>
 			<tr>
 				<th colspan=5>
-					<button onclick="onToggleAll()">Toggle all</button>
-					<button onclick="onToggleMissing()">Toggle missing</button>
-					<button onclick="onToggleRemote()">Toggle remote</button>
-					<button onclick="onDeleteSelected()">Delete</button>
+					<vscode-button onclick="onToggleAll()">Toggle all</vscode-button>
+					<vscode-button onclick="onToggleMissing()">Toggle missing</vscode-button>
+					<vscode-button onclick="onToggleRemote()">Toggle remote</vscode-button>
+					<vscode-button onclick="onDeleteSelected()">Delete</vscode-button>
 				</th>
 			</tr>
 			<tr>
-				<th><input type="checkbox" id="select-all" onchange="onSelectAllChange(this)"></th>
+				<th><vscode-checkbox id="select-all" onchange="onSelectAllChange(this)"></th>
 				<th>Name</th>
 				<th>Path / URL</th>
 				<th>Exists</th>
@@ -179,29 +195,28 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 			${tableRows}
 		</tbody>
 	</table>
-	<script src="${scriptUri}"></script>
 </body>
 
 </html>`;
 }
 
-function getTargetInfo(vscdb: string, property: string = 'folderUri'): ITargetInfo[] {
+function getTargetInfo(vscdb: string, type: QueryType = 'folderUri'): TargetInfo[] {
 	const db = new DatabaseConstructor(vscdb);
 	const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
 	// @ts-ignore
 	const value = row?.value ?? '';
 	const parsedValue = JSON.parse(value);
-	const infos = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty(property));
-	let targetInfo: ITargetInfo[] = [];
+	const infos = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty(type));
+	let targetInfo: TargetInfo[] = [];
 	for (const i of infos) {
 		let p, name, remote, pathExists, label;
-		p = i[property];
-		name = path.basename(vscode.Uri.parse(i[property]).fsPath);
+		p = i[type];
+		name = path.basename(vscode.Uri.parse(i[type]).fsPath);
 		if (i.label) {
 			label = i.label;
 			remote = true;
 		} else {
-			label = vscode.Uri.parse(i[property]).fsPath;
+			label = vscode.Uri.parse(i[type]).fsPath;
 			remote = false;
 			pathExists = fs.existsSync(label);
 		}
@@ -216,7 +231,7 @@ function getTargetInfo(vscdb: string, property: string = 'folderUri'): ITargetIn
 	return targetInfo;
 }
 
-function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri'): ITargetInfo[] {
+function deleteTarget(vscdb: string, target: string[], type: QueryType = 'folderUri'): TargetInfo[] {
 	const db = new DatabaseConstructor(vscdb);
 	const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
 	// @ts-ignore
@@ -229,7 +244,7 @@ function deleteTarget(vscdb: string, target: string[], type: string = 'folderUri
 	db.prepare("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'").run(JSON.stringify(data));
 
 	const infos = data.entries.filter((obj: object) => obj.hasOwnProperty(type));
-	let targetInfo: ITargetInfo[] = [];
+	let targetInfo: TargetInfo[] = [];
 	for (const i of infos) {
 		let p, name, remote, pathExists, label;
 		p = i[type];

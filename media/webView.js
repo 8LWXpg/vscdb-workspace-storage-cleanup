@@ -13,7 +13,7 @@ function onDelete(selected) {
 }
 
 function onDeleteSelected() {
-    const selectedElements = document.querySelectorAll('tbody input[type="checkbox"]:checked');
+    const selectedElements = document.querySelectorAll('tbody vscode-checkbox.checked');
     const selected = Array.from(selectedElements, element => element.getAttribute('path'));
 
     vscode.postMessage({
@@ -23,23 +23,34 @@ function onDeleteSelected() {
 }
 
 function onSelectAllChange(checkbox) {
-    document.querySelectorAll('tbody input[type="checkbox"]')
+    document
+        .querySelectorAll('tbody vscode-checkbox')
         .forEach(e => e.checked = checkbox.checked);
 }
 
 function onToggleAll() {
-    document.querySelectorAll('tbody input[type="checkbox"]')
+    document
+        .querySelectorAll('tbody vscode-checkbox')
         .forEach(e => e.checked = !e.checked);
 }
 
 function onToggleMissing() {
     document
-        .querySelectorAll('tbody input[type="checkbox"][exist="false"]')
+        .querySelectorAll('tbody vscode-checkbox[exist="false"]')
         .forEach(e => e.checked = !e.checked);
 }
 
 function onToggleRemote() {
     document
-        .querySelectorAll('tbody input[type="checkbox"][remote="true"]')
+        .querySelectorAll('tbody vscode-checkbox[remote="true"]')
         .forEach(e => e.checked = !e.checked);
 }
+
+window.addEventListener('message', event => {
+    const message = event.data;
+    switch (message.command) {
+        case 'update':
+            document.querySelector('tbody').innerHTML = message.html;
+            break;
+    }
+});

@@ -16,9 +16,18 @@ const extensionConfig = {
 	external: ["vscode", "better-sqlite3"],
 };
 
+const webComponentConfig = {
+	...baseConfig,
+	platform: "browser",
+	format: "esm",
+	entryPoints: ["./src/component.ts"],
+	outfile: "./media/component.js",
+};
+
 (async () => {
 	try {
 		await build(extensionConfig);
+		await build(webComponentConfig);
 		console.log("build complete");
 	} catch (err) {
 		process.stderr.write(err.stderr);
