@@ -1,6 +1,10 @@
 # Change Log
 
-## 2.4.0
+## v3.0.0
+
+- Update UI with web components.
+
+## v2.4.0
 
 - Bump `electron-rebuild` electron version to `29.4.0`
 
