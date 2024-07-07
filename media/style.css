@@ -18,15 +18,6 @@ body {
     outline-color: var(--vscode-focusBorder) !important;
 }
 
-a {
-    color: var(--vscode-textLink-foreground);
-}
-
-a:hover,
-a:active {
-    color: var(--vscode-textLink-activeForeground);
-}
-
 table {
     border-collapse: separate;
     border-spacing: 0;
@@ -50,7 +41,20 @@ table tbody td {
 
 .sticky {
     position: sticky;
-    background-color: var(--vscode-input-background);
+    background-color: var(--vscode-panel-background);
     padding: 5pt 5pt 0;
     z-index: 1;
+}
+
+.icon-link {
+    color: var(--vscode-textLink-foreground);
+}
+
+.icon-link:hover,
+.icon-link:active {
+    color: var(--vscode-textLink-activeForeground);
+}
+
+.icon-link svg {
+    display: block;
 }

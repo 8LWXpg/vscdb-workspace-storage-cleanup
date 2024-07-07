@@ -147,7 +147,11 @@ function getTableRows(info: TargetInfo[]): string {
 	<td>${row.label}</td>
 	<td>${icon}</td>
 	<td>
-		<a href="Delete" onclick="onDelete('${row.path}')"><i class="fa fa-trash-alt"></i></a>
+		<a href="Delete" onclick="onDelete('${row.path}')" class="icon-link">
+			<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" width="16" height="16">
+    			<path fill="currentColor" d="M32 464a48 48 0 0 0 48 48h288a48 48 0 0 0 48-48V128H32zm272-256a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zm-96 0a16 16 0 0 1 32 0v224a16 16 0 0 1-32 0zM432 32H312l-9.4-18.7A24 24 0 0 0 281.1 0H166.8a23.72 23.72 0 0 0-21.4 13.3L136 32H16A16 16 0 0 0 0 48v32a16 16 0 0 0 16 16h416a16 16 0 0 0 16-16V48a16 16 0 0 0-16-16z"/>
+  			</svg>
+		</a>
 	</td>
 </tr>`;
 		})
@@ -167,7 +171,6 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 
 <head>
 	<link rel="stylesheet" href="${styleUri}">
-	<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css" integrity="sha512-1ycn6IcaQQ40/MKBW2W4Rhis/DbILU74C1vSrLJxCq57o941Ym01SwNsOMqvEBFlcgUa6xLiPY/NS5R+E6ztJQ==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 	<script src="${scriptUri}"></script>
 	<script type="module" src="${componentUri}"></script>
 </head>
@@ -201,69 +204,81 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 }
 
 function getTargetInfo(vscdb: string, type: QueryType = 'folderUri'): TargetInfo[] {
-	const db = new DatabaseConstructor(vscdb);
-	const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
-	// @ts-ignore
-	const value = row?.value ?? '';
-	const parsedValue = JSON.parse(value);
-	const infos = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty(type));
-	let targetInfo: TargetInfo[] = [];
-	for (const i of infos) {
-		let p, name, remote, pathExists, label;
-		p = i[type];
-		name = path.basename(vscode.Uri.parse(i[type]).fsPath);
-		if (i.label) {
-			label = i.label;
-			remote = true;
-		} else {
-			label = vscode.Uri.parse(i[type]).fsPath;
-			remote = false;
-			pathExists = fs.existsSync(label);
+	try {
+		const db = new DatabaseConstructor(vscdb);
+		const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
+		// @ts-ignore
+		const value = row?.value ?? '';
+		const parsedValue = JSON.parse(value);
+		const infos = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty(type));
+		let targetInfo: TargetInfo[] = [];
+		for (const i of infos) {
+			let p, name, remote, pathExists, label;
+			p = i[type];
+			name = path.basename(vscode.Uri.parse(i[type]).fsPath);
+			if (i.label) {
+				label = i.label;
+				remote = true;
+			} else {
+				label = vscode.Uri.parse(i[type]).fsPath;
+				remote = false;
+				pathExists = fs.existsSync(label);
+			}
+			targetInfo.push({
+				name: name,
+				path: p,
+				remote: remote,
+				label: label,
+				pathExists: pathExists,
+			});
 		}
-		targetInfo.push({
-			name: name,
-			path: p,
-			remote: remote,
-			label: label,
-			pathExists: pathExists,
-		});
+		return targetInfo;
+	} catch (e) {
+		vscode.window.showErrorMessage(`Error: ${e}`);
+		return [];
 	}
-	return targetInfo;
 }
 
 function deleteTarget(vscdb: string, target: string[], type: QueryType = 'folderUri'): TargetInfo[] {
-	const db = new DatabaseConstructor(vscdb);
-	const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
-	// @ts-ignore
-	const data = JSON.parse(row.value);
+	try {
+		const db = new DatabaseConstructor(vscdb);
+		const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
+		// @ts-ignore
+		const data = JSON.parse(row.value);
 
-	// Filter the entries array
-	data.entries = data.entries.filter((entry: { [key: string]: string }) => !target.includes(entry[type]));
+		// Filter the entries array
+		data.entries = data.entries.filter((entry: { [key: string]: string }) => !target.includes(entry[type]));
 
-	// Save the modified object back to the ItemTable
-	db.prepare("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'").run(JSON.stringify(data));
+		// Save the modified object back to the ItemTable
+		db.prepare("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'").run(
+			JSON.stringify(data)
+		);
 
-	const infos = data.entries.filter((obj: object) => obj.hasOwnProperty(type));
-	let targetInfo: TargetInfo[] = [];
-	for (const i of infos) {
-		let p, name, remote, pathExists, label;
-		p = i[type];
-		name = path.basename(vscode.Uri.parse(i[type]).fsPath);
-		if (i.label) {
-			label = i.label;
-			remote = true;
-		} else {
-			label = vscode.Uri.parse(i[type]).fsPath;
-			remote = false;
-			pathExists = fs.existsSync(label);
+		const infos = data.entries.filter((obj: object) => obj.hasOwnProperty(type));
+		let targetInfo: TargetInfo[] = [];
+		for (const i of infos) {
+			let p, name, remote, pathExists, label;
+			p = i[type];
+			name = path.basename(vscode.Uri.parse(i[type]).fsPath);
+			if (i.label) {
+				label = i.label;
+				remote = true;
+			} else {
+				label = vscode.Uri.parse(i[type]).fsPath;
+				remote = false;
+				pathExists = fs.existsSync(label);
+			}
+			targetInfo.push({
+				name: name,
+				path: p,
+				remote: remote,
+				label: label,
+				pathExists: pathExists,
+			});
 		}
-		targetInfo.push({
-			name: name,
-			path: p,
-			remote: remote,
-			label: label,
-			pathExists: pathExists,
-		});
+		return targetInfo;
+	} catch (e) {
+		vscode.window.showErrorMessage(`Error: ${e}`);
+		return [];
 	}
-	return targetInfo;
 }
