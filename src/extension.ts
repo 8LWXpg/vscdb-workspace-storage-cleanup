@@ -21,6 +21,18 @@ type TargetInfo = {
 	pathExists?: boolean;
 };
 
+type DBRow = {
+	value: string;
+};
+
+type Entry = {
+	label?: string;
+} & ({ folderUri: string; fileUri?: never } | { folderUri?: never; fileUri: string });
+
+type ParsedValue = {
+	entries: Entry[];
+};
+
 type QueryType = 'folderUri' | 'fileUri';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -206,33 +218,20 @@ function getWebView(currentPanel: vscode.WebviewPanel, context: vscode.Extension
 function getTargetInfo(vscdb: string, type: QueryType = 'folderUri'): TargetInfo[] {
 	try {
 		const db = new DatabaseConstructor(vscdb);
-		const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
-		// @ts-ignore
+		const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get() as DBRow;
 		const value = row?.value ?? '';
-		const parsedValue = JSON.parse(value);
-		const infos = parsedValue.entries.filter((obj: object) => obj.hasOwnProperty(type));
-		let targetInfo: TargetInfo[] = [];
-		for (const i of infos) {
-			let p, name, remote, pathExists, label;
-			p = i[type];
-			name = path.basename(vscode.Uri.parse(i[type]).fsPath);
-			if (i.label) {
-				label = i.label;
-				remote = true;
-			} else {
-				label = vscode.Uri.parse(i[type]).fsPath;
-				remote = false;
-				pathExists = fs.existsSync(label);
-			}
-			targetInfo.push({
-				name: name,
-				path: p,
-				remote: remote,
-				label: label,
-				pathExists: pathExists,
+		const parsedValue = JSON.parse(value) as ParsedValue;
+		return parsedValue.entries
+			.filter((obj) => obj.hasOwnProperty(type))
+			.map((i) => {
+				const p = i[type] as string;
+				const name = path.basename(vscode.Uri.parse(p).fsPath);
+				const label = i.label ? i.label : vscode.Uri.parse(p).fsPath;
+				const remote = Boolean(i.label);
+				const pathExists = !remote && fs.existsSync(label);
+
+				return { name, path: p, remote, label, pathExists };
 			});
-		}
-		return targetInfo;
 	} catch (e) {
 		vscode.window.showErrorMessage(`Error: ${e}`);
 		return [];
@@ -242,41 +241,29 @@ function getTargetInfo(vscdb: string, type: QueryType = 'folderUri'): TargetInfo
 function deleteTarget(vscdb: string, target: string[], type: QueryType = 'folderUri'): TargetInfo[] {
 	try {
 		const db = new DatabaseConstructor(vscdb);
-		const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get();
-		// @ts-ignore
-		const data = JSON.parse(row.value);
+		const row = db.prepare("SELECT value FROM ItemTable WHERE key = 'history.recentlyOpenedPathsList'").get() as DBRow;
+		const data = JSON.parse(row.value) as ParsedValue;
 
 		// Filter the entries array
-		data.entries = data.entries.filter((entry: { [key: string]: string }) => !target.includes(entry[type]));
+		// @ts-ignore
+		data.entries = data.entries.filter((entry) => !target.includes(entry[type]));
 
 		// Save the modified object back to the ItemTable
 		db.prepare("UPDATE ItemTable SET value = ? WHERE key = 'history.recentlyOpenedPathsList'").run(
 			JSON.stringify(data)
 		);
 
-		const infos = data.entries.filter((obj: object) => obj.hasOwnProperty(type));
-		let targetInfo: TargetInfo[] = [];
-		for (const i of infos) {
-			let p, name, remote, pathExists, label;
-			p = i[type];
-			name = path.basename(vscode.Uri.parse(i[type]).fsPath);
-			if (i.label) {
-				label = i.label;
-				remote = true;
-			} else {
-				label = vscode.Uri.parse(i[type]).fsPath;
-				remote = false;
-				pathExists = fs.existsSync(label);
-			}
-			targetInfo.push({
-				name: name,
-				path: p,
-				remote: remote,
-				label: label,
-				pathExists: pathExists,
+		return data.entries
+			.filter((obj: object) => obj.hasOwnProperty(type))
+			.map((i) => {
+				const p = i[type] as string;
+				const name = path.basename(vscode.Uri.parse(p).fsPath);
+				const label = i.label ? i.label : vscode.Uri.parse(p).fsPath;
+				const remote = !!i.label;
+				const pathExists = !remote && fs.existsSync(label);
+
+				return { name, path: p, remote, label, pathExists };
 			});
-		}
-		return targetInfo;
 	} catch (e) {
 		vscode.window.showErrorMessage(`Error: ${e}`);
 		return [];
