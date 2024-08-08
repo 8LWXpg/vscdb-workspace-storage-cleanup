@@ -28,7 +28,7 @@
     "cleanup"
   ],
   "engines": {
-    "vscode": "^1.90.0"
+    "vscode": "^1.92.0"
   },
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -51,7 +51,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "rebuild": "electron-rebuild -v 29.4.0",
+    "rebuild": "electron-rebuild -v 30.1.2",
     "build": "node ./esbuild.js",
     "compile": "npm run rebuild && node ./esbuild.js",
     "watch": "tsc -watch -p ./",

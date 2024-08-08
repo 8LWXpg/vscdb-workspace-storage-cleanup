@@ -3,6 +3,7 @@
 ## v3.0.0
 
 - Update UI with web components.
+- Bump `electron-rebuild` electron version to `30.1.2`
 
 ## v2.4.0
 
