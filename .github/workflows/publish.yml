@@ -44,6 +44,7 @@ jobs:
         with:
           node-version: 'latest'
           cache: 'npm'
+      - run: npm install -g @vscode/vsce
       - run: npm install
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
