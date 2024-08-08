@@ -11,5 +11,8 @@
     "cSpell.words": [
         "vscdb"
     ],
-    "typescript.tsdk": "node_modules\\typescript\\lib"
+    "typescript.tsdk": "node_modules\\typescript\\lib",
+    "github-actions.workflows.pinned.workflows": [
+        ".github/workflows/publish.yml"
+    ]
 }
