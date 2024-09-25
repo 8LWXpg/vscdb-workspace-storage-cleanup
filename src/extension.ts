@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 import DatabaseConstructor from 'better-sqlite3';
-import { get } from 'http';
 
 /**
  * describes the information related to a workspace or file.
