@@ -63,6 +63,7 @@ jobs:
     if: success()
     steps:
       - uses: actions/download-artifact@v4
+      - run: npm install -g @vscode/vsce
       - run: npx vsce publish --packagePath $(find . -iname *.vsix)
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
