@@ -28,7 +28,7 @@
     "cleanup"
   ],
   "engines": {
-    "vscode": "^1.92.0"
+    "vscode": "^1.95.0"
   },
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -61,20 +61,18 @@
     "check-update": "npx npm-check-updates"
   },
   "devDependencies": {
-    "@electron/rebuild": "^3.6.0",
+    "@electron/rebuild": "^3.7.0",
     "@types/better-sqlite3": "^7.6.11",
-    "@types/node": "22.1.0",
-    "@types/vscode": "^1.92.0",
-    "@typescript-eslint/eslint-plugin": "^8.0.1",
-    "@typescript-eslint/parser": "^8.0.1",
-    "@vscode/test-cli": "^0.0.10",
-    "@vscode/test-electron": "^2.4.1",
+    "@types/node": "22.8.7",
+    "@types/vscode": "^1.95.0",
+    "@typescript-eslint/eslint-plugin": "^8.12.2",
+    "@typescript-eslint/parser": "^8.12.2",
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "esbuild": "^0.23.0",
-    "eslint": "^9.8.0",
-    "typescript": "^5.5.4"
+    "esbuild": "^0.24.0",
+    "eslint": "^9.14.0",
+    "typescript": "^5.6.3"
   },
   "dependencies": {
-    "better-sqlite3": "^11.1.2"
+    "better-sqlite3": "^11.5.0"
   }
 }

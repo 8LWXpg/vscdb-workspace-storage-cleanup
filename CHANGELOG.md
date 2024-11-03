@@ -3,6 +3,7 @@
 ## v3.1.0
 
 - Bump `electron-rebuild` electron version to `31.2.1`
+- Bump dependencies
 
 ## v3.0.0
 
