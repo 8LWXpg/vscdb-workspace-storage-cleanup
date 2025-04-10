@@ -3,7 +3,7 @@
   "name": "vscdb-workspace-storage-cleanup",
   "displayName": "Workspace Storage Cleanup (vscdb)",
   "description": "Easy manage your workspace and file storage inside state.vscdb",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "author": {
     "name": "8LWXpg"
   },
