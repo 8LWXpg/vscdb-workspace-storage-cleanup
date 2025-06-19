@@ -28,7 +28,7 @@
     "cleanup"
   ],
   "engines": {
-    "vscode": "^1.99.0"
+    "vscode": "^1.101.0"
   },
   "activationEvents": [],
   "main": "./out/extension.js",
@@ -51,9 +51,9 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "rebuild": "electron-rebuild -v 34.3.2",
+    "rebuild": "electron-rebuild -v 35.5.1",
     "build": "node ./esbuild.js",
-    "compile": "npm run rebuild && node ./esbuild.js",
+    "compile": "npm run rebuild && node ./esbuild.mjs",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
@@ -61,18 +61,18 @@
     "check-update": "npx npm-check-updates"
   },
   "devDependencies": {
-    "@electron/rebuild": "^3.7.1",
+    "@electron/rebuild": "^4.0.1",
     "@types/better-sqlite3": "^7.6.13",
-    "@types/node": "22.14.0",
-    "@types/vscode": "^1.99.1",
-    "@typescript-eslint/eslint-plugin": "^8.29.1",
-    "@typescript-eslint/parser": "^8.29.1",
+    "@types/node": "24.0.3",
+    "@types/vscode": "^1.101.0",
+    "@typescript-eslint/eslint-plugin": "^8.34.1",
+    "@typescript-eslint/parser": "^8.34.1",
     "@vscode/webview-ui-toolkit": "^1.4.0",
-    "esbuild": "^0.25.2",
-    "eslint": "^9.24.0",
+    "esbuild": "^0.25.5",
+    "eslint": "^9.29.0",
     "typescript": "^5.8.3"
   },
   "dependencies": {
-    "better-sqlite3": "^11.9.1"
+    "better-sqlite3": "^11.10.0"
   }
 }
