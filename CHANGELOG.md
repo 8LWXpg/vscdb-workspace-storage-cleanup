@@ -1,8 +1,13 @@
 # Change Log
 
-## v3.2.0
+## v3.3.0
 
 - Bump `electron-rebuild` electron version to `35.5.1`
+- Bump dependencies
+
+## v3.2.0
+
+- Bump `electron-rebuild` electron version to `34.3.2`
 - Bump dependencies
 
 ## v3.1.0
