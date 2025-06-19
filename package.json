@@ -52,13 +52,10 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "rebuild": "electron-rebuild -v 35.5.1",
-    "build": "node ./esbuild.js",
+    "build": "node ./esbuild.mjs",
     "compile": "npm run rebuild && node ./esbuild.mjs",
     "watch": "tsc -watch -p ./",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src --ext ts",
-    "test": "node ./out/test/runTest.js",
-    "check-update": "npx npm-check-updates"
+    "update": "npx npm-check-updates -u && npm i"
   },
   "devDependencies": {
     "@electron/rebuild": "^4.0.1",
